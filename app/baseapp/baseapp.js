@@ -45,12 +45,7 @@ class BaseApp
     }
     onBodyData(bodyFrame)
     {
-        if (bodyFrame.bodies.length) {
-            console.log(bodyFrame);
-            this.onBodyData = function () {
-            };
-        }
-        this.testing = 1;
+
     }
     onColorData(colorFrame)
     {

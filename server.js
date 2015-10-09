@@ -47,12 +47,12 @@ var broadCastPacket = function(wss, type, data)
         var pData = new PixelData(colorFrame, {width: 1920, height: 1080}).resize(320, 180).getDeflatedData();
         broadCastpacket(wsServer, 'colorData',btoa(pData));
     });
-    var test = 0;
+    //kinect.openColorReader(); // unused for now
+
     kinect.on('bodyFrame', function(bodyFrame){
         var bodyData = new BodyData(bodyFrame);
         broadCastPacket(wsServer, 'bodyData',bodyData.getData());
     });
 
-    //kinect.openColorReader();
     kinect.openBodyReader();
 })();
