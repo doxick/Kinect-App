@@ -28,3 +28,6 @@ node_modules
 
 .idea
 .idea/workspace.xml
+
+# just generate it
+build/bundle.js

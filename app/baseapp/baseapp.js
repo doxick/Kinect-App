@@ -1,6 +1,7 @@
 "use strict";
 var Three = require('three'),
-    BodyData = require('../../includes/bodydata/bodydata');
+    BodyData = require('../../includes/bodydata/bodydata'),
+    PixelData = require('../../includes/pixeldata/pixeldata');
 
 class BaseApp
 {
@@ -44,13 +45,10 @@ class BaseApp
     }
     onBodyData(bodyFrame)
     {
-<<<<<<< HEAD
-=======
 
     }
     onColorData(colorFrame)
     {
->>>>>>> PixelData
 
     }
     render()
@@ -96,7 +94,14 @@ class BaseApp
             case 'bodyData':
                 this._onBodyData(packet.data);
                 break;
+            case 'colorData':
+                this._onColorData(packet.data);
+                break;
         }
+    }
+    _onColorData(data)
+    {
+        this.onColorData(new PixelData(atob(data),{deflated:true}));
     }
     _onBodyData(data)
     {
