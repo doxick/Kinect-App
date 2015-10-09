@@ -40,9 +40,23 @@ var broadCastPacket = function(wss, type, data)
     var kinect = new Kinect2();
     if (! kinect.open())
         return;
+<<<<<<< HEAD
+=======
+
+    kinect.on('colorFrame',function(colorFrame){
+        var pData = new PixelData(colorFrame, {width: 1920, height: 1080}).resize(320, 180).getDeflatedData();
+        broadCastpacket(wsServer, 'colorData',btoa(pData));
+    });
+    //kinect.openColorReader(); // unused for now
+
+>>>>>>> PixelData
     kinect.on('bodyFrame', function(bodyFrame){
         var bodyData = new BodyData(bodyFrame);
         broadCastPacket(wsServer, 'bodyData',bodyData.getData());
     });
+<<<<<<< HEAD
+=======
+
+>>>>>>> PixelData
     kinect.openBodyReader();
 })();

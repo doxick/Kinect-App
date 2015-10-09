@@ -44,6 +44,13 @@ class BaseApp
     }
     onBodyData(bodyFrame)
     {
+<<<<<<< HEAD
+=======
+
+    }
+    onColorData(colorFrame)
+    {
+>>>>>>> PixelData
 
     }
     render()
