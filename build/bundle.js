@@ -96,86 +96,116 @@
 
 	var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
-	var _get = function get(_x, _x2, _x3) { var _again = true; _function: while (_again) { var object = _x, property = _x2, receiver = _x3; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x = parent; _x2 = property; _x3 = receiver; _again = true; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
-
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-	function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
 	var Three = __webpack_require__(3),
-	    BaseApp = __webpack_require__(4),
-	    ThreeTrackballControls = __webpack_require__(27),
-	    HandState = __webpack_require__(7),
-	    JointType = __webpack_require__(6);
+	    BodyData = __webpack_require__(4);
 
-	/*
-	    We cache some geometry and materials so we don't have to create them on the fly every iteration
-	    Saves memory + performance
+	var BaseApp = (function () {
+	    function BaseApp(container, width, height) {
+	        _classCallCheck(this, BaseApp);
 
-	    OTHERWISE:
-	        if you remove a mesh from a scene, do not forgot to mesh.geometry.dispose() otherwise it won't be removed.
-	        If geometry is shared: this will remove it from memory so only remove it from the last mesh.
-	 */
-	var SPHERE = new Three.SphereGeometry(2.5, 16, 6);
-	var MATERIALS = [new Three.MeshPhongMaterial({ color: 0xFF0000, specular: 0x009900, shininess: 30, shading: Three.FlatShading }), new Three.MeshPhongMaterial({ color: 0x00FF00, specular: 0x009900, shininess: 30, shading: Three.FlatShading }), new Three.MeshPhongMaterial({ color: 0x0000FF, specular: 0x009900, shininess: 30, shading: Three.FlatShading }), new Three.MeshPhongMaterial({ color: 0x00FFFF, specular: 0x009900, shininess: 30, shading: Three.FlatShading }), new Three.MeshPhongMaterial({ color: 0xFFFF00, specular: 0x009900, shininess: 30, shading: Three.FlatShading }), new Three.MeshPhongMaterial({ color: 0xFF00FF, specular: 0x009900, shininess: 30, shading: Three.FlatShading })];
+	        this.rootScene = new Three.Scene();
+	        this.camera = new Three.PerspectiveCamera(90, width / height, 0.1, 1000 * 1000);
+	        this.camera.position.z = 100;
+	        var renderer = this.renderer = new Three.WebGLRenderer();
+	        renderer.setPixelRatio(window.devicePixelRatio);
+	        renderer.setSize(width, height);
+	        container.appendChild(renderer.domElement);
 
-	var DemoApp = (function (_BaseApp) {
-	    _inherits(DemoApp, _BaseApp);
-
-	    function DemoApp(container, width, height) {
-	        _classCallCheck(this, DemoApp);
-
-	        _get(Object.getPrototypeOf(DemoApp.prototype), 'constructor', this).call(this, container, width, height);
-
-	        // add some trackball controls
-	        this.controls = new ThreeTrackballControls(this.camera);
-	        this.controls.target.set(0, 0, 0);
-
-	        // add some light to show what's on
-	        this.rootScene.add(new Three.AmbientLight(0xaaaaaa));
-	        // add some shading light sources
-	        var directionalLight = new Three.DirectionalLight(0xffffff, 0.5);
-	        directionalLight.position.set(0, 0, 10);
-	        this.rootScene.add(directionalLight);
-
-	        // just a collection of the skeletons
-	        this.baseNode = new Three.Object3D();
-	        this.rootScene.add(this.baseNode);
+	        this._onWindowResize = this._onWindowResize.bind(this);
+	        this._bindEvents();
+	        this._bindSocket();
 	    }
 
-	    _createClass(DemoApp, [{
-	        key: 'onBodyData',
-	        value: function onBodyData(bodyData) {
-	            var _this = this;
-
-	            this.baseNode.children.forEach(function (skeleton) {
-	                _this.baseNode.remove(skeleton);
-	            });
-
-	            if (bodyData.bodies.length == 0) return;
-
-	            bodyData.bodies.forEach(function (body, bodyIdx) {
-
-	                var skeleton = new Three.Group();
-	                body.joints.forEach(function (joint) {
-	                    var mesh = new Three.Mesh(SPHERE, MATERIALS[[body.leftHandState, body.rightHandState].indexOf(HandState.Closed) > -1 ? 6 : bodyIdx]);
-	                    mesh.position.set(joint.position.x * 100, joint.position.y * 100, joint.position.z * 10);
-	                    skeleton.add(mesh);
-	                });
-	                _this.baseNode.add(skeleton);
-	            });
+	    _createClass(BaseApp, [{
+	        key: 'run',
+	        value: function run() {
+	            this.animationFrameId = requestAnimationFrame(this._update.bind(this));
 	        }
 	    }, {
+	        key: '_update',
+	        value: function _update() {
+	            this.beforeUpdate();
+	            this.update();
+	            this.afterUpdate();
+	            this.render();
+	            this.animationFrameId = requestAnimationFrame(this._update.bind(this));
+	        }
+	    }, {
+	        key: 'beforeUpdate',
+	        value: function beforeUpdate() {}
+	    }, {
 	        key: 'update',
-	        value: function update() {
-	            this.controls.update();
+	        value: function update() {}
+	    }, {
+	        key: 'afterUpdate',
+	        value: function afterUpdate() {}
+	    }, {
+	        key: 'onBodyData',
+	        value: function onBodyData(bodyFrame) {}
+	    }, {
+	        key: 'render',
+	        value: function render() {
+	            this.camera.lookAt(new Three.Vector3());
+	            this.renderer.render(this.rootScene, this.camera);
+	        }
+	    }, {
+	        key: 'stop',
+	        value: function stop() {
+	            cancelAnimationFrame(this.animationFrameId);
+	            this._unbinedEvents();
+	            this._unbindSocket();
+	        }
+	    }, {
+	        key: '_bindEvents',
+	        value: function _bindEvents() {
+	            window.addEventListener('resize', this._onWindowResize, false);
+	        }
+	    }, {
+	        key: '_unbinedEvents',
+	        value: function _unbinedEvents() {
+	            window.removeEventListener('resize', this._onWindowResize, false);
+	        }
+	    }, {
+	        key: '_onWindowResize',
+	        value: function _onWindowResize() {
+	            this.camera.aspect = window.innerWidth / window.innerHeight;
+	            this.camera.updateProjectionMatrix();
+	            this.renderer.setSize(window.innerWidth, window.innerHeight);
+	        }
+	    }, {
+	        key: '_bindSocket',
+	        value: function _bindSocket() {
+	            this.websocket = new WebSocket('ws://localhost:1234/');
+	            this.websocket.onmessage = this._handleMessage.bind(this);
+	        }
+	    }, {
+	        key: '_handleMessage',
+	        value: function _handleMessage(msg) {
+	            var packet = JSON.parse(msg.data);
+	            switch (packet.type) {
+	                case 'bodyData':
+	                    this._onBodyData(packet.data);
+	                    break;
+	            }
+	        }
+	    }, {
+	        key: '_onBodyData',
+	        value: function _onBodyData(data) {
+	            this.onBodyData(new BodyData(data));
+	        }
+	    }, {
+	        key: '_unbindSocket',
+	        value: function _unbindSocket() {
+	            this.websocket.close();
 	        }
 	    }]);
 
-	    return DemoApp;
-	})(BaseApp);
+	    return BaseApp;
+	})();
 
-	module.exports = DemoApp;
+	module.exports = BaseApp;
 
 /***/ },
 /* 3 */
@@ -2541,146 +2571,9 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-	var Three = __webpack_require__(3),
-	    BodyData = __webpack_require__(5),
-	    PixelData = __webpack_require__(26);
-
-	var BaseApp = (function () {
-	    function BaseApp(container, width, height) {
-	        _classCallCheck(this, BaseApp);
-
-	        this.rootScene = new Three.Scene();
-	        this.camera = new Three.PerspectiveCamera(90, width / height, 0.1, 1000 * 1000);
-	        this.camera.position.z = 100;
-	        var renderer = this.renderer = new Three.WebGLRenderer();
-	        renderer.setPixelRatio(window.devicePixelRatio);
-	        renderer.setSize(width, height);
-	        container.appendChild(renderer.domElement);
-
-	        this._onWindowResize = this._onWindowResize.bind(this);
-	        this._bindEvents();
-	        this._bindSocket();
-	    }
-
-	    _createClass(BaseApp, [{
-	        key: 'run',
-	        value: function run() {
-	            this.animationFrameId = requestAnimationFrame(this._update.bind(this));
-	        }
-	    }, {
-	        key: '_update',
-	        value: function _update() {
-	            this.beforeUpdate();
-	            this.update();
-	            this.afterUpdate();
-	            this.render();
-	            this.animationFrameId = requestAnimationFrame(this._update.bind(this));
-	        }
-	    }, {
-	        key: 'beforeUpdate',
-	        value: function beforeUpdate() {}
-	    }, {
-	        key: 'update',
-	        value: function update() {}
-	    }, {
-	        key: 'afterUpdate',
-	        value: function afterUpdate() {}
-	    }, {
-	        key: 'onBodyData',
-	        value: function onBodyData(bodyFrame) {
-	            if (bodyFrame.bodies.length) {
-	                console.log(bodyFrame);
-	                this.onBodyData = function () {};
-	            }
-	            this.testing = 1;
-	        }
-	    }, {
-	        key: 'onColorData',
-	        value: function onColorData(colorFrame) {}
-	    }, {
-	        key: 'render',
-	        value: function render() {
-	            this.camera.lookAt(new Three.Vector3());
-	            this.renderer.render(this.rootScene, this.camera);
-	        }
-	    }, {
-	        key: 'stop',
-	        value: function stop() {
-	            cancelAnimationFrame(this.animationFrameId);
-	            this._unbinedEvents();
-	            this._unbindSocket();
-	        }
-	    }, {
-	        key: '_bindEvents',
-	        value: function _bindEvents() {
-	            window.addEventListener('resize', this._onWindowResize, false);
-	        }
-	    }, {
-	        key: '_unbinedEvents',
-	        value: function _unbinedEvents() {
-	            window.removeEventListener('resize', this._onWindowResize, false);
-	        }
-	    }, {
-	        key: '_onWindowResize',
-	        value: function _onWindowResize() {
-	            this.camera.aspect = window.innerWidth / window.innerHeight;
-	            this.camera.updateProjectionMatrix();
-	            this.renderer.setSize(window.innerWidth, window.innerHeight);
-	        }
-	    }, {
-	        key: '_bindSocket',
-	        value: function _bindSocket() {
-	            this.websocket = new WebSocket('ws://localhost:1234/');
-	            this.websocket.onmessage = this._handleMessage.bind(this);
-	        }
-	    }, {
-	        key: '_handleMessage',
-	        value: function _handleMessage(msg) {
-	            var packet = JSON.parse(msg.data);
-	            switch (packet.type) {
-	                case 'bodyData':
-	                    this._onBodyData(packet.data);
-	                    break;
-	                case 'colorData':
-	                    this._onColorData(packet.data);
-	                    break;
-	            }
-	        }
-	    }, {
-	        key: '_onColorData',
-	        value: function _onColorData(data) {
-	            this.onColorData(new PixelData(atob(data), { deflated: true }));
-	        }
-	    }, {
-	        key: '_onBodyData',
-	        value: function _onBodyData(data) {
-	            this.onBodyData(new BodyData(data));
-	        }
-	    }, {
-	        key: '_unbindSocket',
-	        value: function _unbindSocket() {
-	            this.websocket.close();
-	        }
-	    }]);
-
-	    return BaseApp;
-	})();
-
-	module.exports = BaseApp;
-
-/***/ },
-/* 5 */
-/***/ function(module, exports, __webpack_require__) {
-
-	"use strict";
-
-	var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
-
-	var JointType = __webpack_require__(6),
-	    HandState = __webpack_require__(7),
-	    Body = __webpack_require__(8);
+	var JointType = __webpack_require__(5),
+	    HandState = __webpack_require__(6),
+	    Body = __webpack_require__(7);
 
 	var BodyData = (function () {
 	    function BodyData(data, options) {
@@ -2736,7 +2629,7 @@
 	module.exports.handState = HandState;
 
 /***/ },
-/* 6 */
+/* 5 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -2770,7 +2663,7 @@
 	// Right thumb
 
 /***/ },
-/* 7 */
+/* 6 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -2784,7 +2677,7 @@
 	// The hand is in the lasso state.
 
 /***/ },
-/* 8 */
+/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -2793,7 +2686,7 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-	var Joint = __webpack_require__(9);
+	var Joint = __webpack_require__(8);
 
 	var Body = (function () {
 	    function Body(data, options) {
@@ -2859,7 +2752,7 @@
 	module.exports = Body;
 
 /***/ },
-/* 9 */
+/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -2868,7 +2761,7 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-	var Pako = __webpack_require__(10),
+	var Pako = __webpack_require__(9),
 	    Vector2 = __webpack_require__(3).Vector2,
 	    Vector3 = __webpack_require__(3).Vector3,
 	    Vector4 = __webpack_require__(3).Vector4;
@@ -2930,17 +2823,17 @@
 	module.exports = Joint;
 
 /***/ },
-/* 10 */
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Top level file is just a mixin of submodules & constants
 	'use strict';
 
-	var assign = __webpack_require__(11).assign;
+	var assign = __webpack_require__(10).assign;
 
-	var deflate = __webpack_require__(12);
-	var inflate = __webpack_require__(20);
-	var constants = __webpack_require__(24);
+	var deflate = __webpack_require__(11);
+	var inflate = __webpack_require__(19);
+	var constants = __webpack_require__(23);
 
 	var pako = {};
 
@@ -2949,7 +2842,7 @@
 	module.exports = pako;
 
 /***/ },
-/* 11 */
+/* 10 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -3055,16 +2948,16 @@
 	exports.setTyped(TYPED_OK);
 
 /***/ },
-/* 12 */
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var zlib_deflate = __webpack_require__(13);
-	var utils = __webpack_require__(11);
-	var strings = __webpack_require__(18);
-	var msg = __webpack_require__(17);
-	var zstream = __webpack_require__(19);
+	var zlib_deflate = __webpack_require__(12);
+	var utils = __webpack_require__(10);
+	var strings = __webpack_require__(17);
+	var msg = __webpack_require__(16);
+	var zstream = __webpack_require__(18);
 
 	var toString = Object.prototype.toString;
 
@@ -3422,16 +3315,16 @@
 	exports.gzip = gzip;
 
 /***/ },
-/* 13 */
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var utils = __webpack_require__(11);
-	var trees = __webpack_require__(14);
-	var adler32 = __webpack_require__(15);
-	var crc32 = __webpack_require__(16);
-	var msg = __webpack_require__(17);
+	var utils = __webpack_require__(10);
+	var trees = __webpack_require__(13);
+	var adler32 = __webpack_require__(14);
+	var crc32 = __webpack_require__(15);
+	var msg = __webpack_require__(16);
 
 	/* Public constants ==========================================================*/
 	/* ===========================================================================*/
@@ -5140,12 +5033,12 @@
 	*/
 
 /***/ },
-/* 14 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var utils = __webpack_require__(11);
+	var utils = __webpack_require__(10);
 
 	/* Public constants ==========================================================*/
 	/* ===========================================================================*/
@@ -6319,7 +6212,7 @@
 	exports._tr_align = _tr_align;
 
 /***/ },
-/* 15 */
+/* 14 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -6355,7 +6248,7 @@
 	module.exports = adler32;
 
 /***/ },
-/* 16 */
+/* 15 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -6399,7 +6292,7 @@
 	module.exports = crc32;
 
 /***/ },
-/* 17 */
+/* 16 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -6417,13 +6310,13 @@
 	};
 
 /***/ },
-/* 18 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// String encode/decode helpers
 	'use strict';
 
-	var utils = __webpack_require__(11);
+	var utils = __webpack_require__(10);
 
 	// Quick check if we can use fast array to bin string conversion
 	//
@@ -6627,7 +6520,7 @@
 	};
 
 /***/ },
-/* 19 */
+/* 18 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -6660,18 +6553,18 @@
 	module.exports = ZStream;
 
 /***/ },
-/* 20 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var zlib_inflate = __webpack_require__(21);
-	var utils = __webpack_require__(11);
-	var strings = __webpack_require__(18);
-	var c = __webpack_require__(24);
-	var msg = __webpack_require__(17);
-	var zstream = __webpack_require__(19);
-	var gzheader = __webpack_require__(25);
+	var zlib_inflate = __webpack_require__(20);
+	var utils = __webpack_require__(10);
+	var strings = __webpack_require__(17);
+	var c = __webpack_require__(23);
+	var msg = __webpack_require__(16);
+	var zstream = __webpack_require__(18);
+	var gzheader = __webpack_require__(24);
 
 	var toString = Object.prototype.toString;
 
@@ -7059,16 +6952,16 @@
 	exports.ungzip = inflate;
 
 /***/ },
-/* 21 */
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var utils = __webpack_require__(11);
-	var adler32 = __webpack_require__(15);
-	var crc32 = __webpack_require__(16);
-	var inflate_fast = __webpack_require__(22);
-	var inflate_table = __webpack_require__(23);
+	var utils = __webpack_require__(10);
+	var adler32 = __webpack_require__(14);
+	var crc32 = __webpack_require__(15);
+	var inflate_fast = __webpack_require__(21);
+	var inflate_table = __webpack_require__(22);
 
 	var CODES = 0;
 	var LENS = 1;
@@ -8651,7 +8544,7 @@
 	*/
 
 /***/ },
-/* 22 */
+/* 21 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -8985,12 +8878,12 @@
 	};
 
 /***/ },
-/* 23 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var utils = __webpack_require__(11);
+	var utils = __webpack_require__(10);
 
 	var MAXBITS = 15;
 	var ENOUGH_LENS = 852;
@@ -9302,7 +9195,7 @@
 	};
 
 /***/ },
-/* 24 */
+/* 23 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -9355,7 +9248,7 @@
 	};
 
 /***/ },
-/* 25 */
+/* 24 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -9397,697 +9290,6 @@
 	}
 
 	module.exports = GZheader;
-
-/***/ },
-/* 26 */
-/***/ function(module, exports, __webpack_require__) {
-
-	"use strict";
-
-	var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	var Pako = __webpack_require__(10);
-
-	var PixelData = (function () {
-	    function PixelData(data, options) {
-	        _classCallCheck(this, PixelData);
-
-	        this.width = this.height = 0;
-
-	        options.deflated ? this.setDeflatedData(data) // did we receive the data deflated? first 4 bytes will be width+height
-	        : this.setData(data, options.width, options.height); // we received raw data, need width+height
-	    }
-
-	    /*
-	        @public
-	        return a new resized pixel array
-	     */
-
-	    _createClass(PixelData, [{
-	        key: "resize",
-	        value: function resize(newWidth, newHeight) {
-	            var stepX = this.width / newWidth,
-	                // take a sample every stepX pixels
-	            stepY = this.height / newHeight; // no bilinear interpolation (...yet!)
-	            var cx,
-	                // current X. Since step{X,Y} will be floats, we need to floor them every time
-	            cyi,
-	                // current y index. We hoist it instead of going 'cy * w + x' we can then do 'cyi + x'
-	            ci = 0,
-	                // current pixel index
-	            coi,
-	                // current old pixel index. instead of creating a new variable each iteration... we hoist it
-	            _floor = Math.floor,
-	                // shortcut to save some scoping. Premature optimization much...
-	            data = new Uint8Array(4 * newWidth * newHeight);
-	            for (var y = 0, h = this.height, w = this.width; y < h; y += stepY) {
-	                cyi = _floor(y) * w;
-	                for (var x = 0; x < w; x += stepX, ci += 4) {
-	                    coi = (cyi + _floor(x)) * 4; // every original pixel has 4 bytes...
-	                    data[ci + 0] = this.data[coi + 0]; // r
-	                    data[ci + 1] = this.data[coi + 1]; // g
-	                    data[ci + 2] = this.data[coi + 2]; // b
-	                    data[ci + 3] = 255; // a (255 = opaque)
-	                }
-	            }
-	            return new PixelData(data, { width: newWidth, height: newHeight });
-	        }
-
-	        /*
-	            @public
-	            set the raw pixel data
-	         */
-	    }, {
-	        key: "setData",
-	        value: function setData(data, width, height) {
-	            this.data = data;
-	            this.width = width;
-	            this.height = height;
-	        }
-
-	        /*
-	            @public
-	            set the zlib deflated 24 bits Uint8Array, convert it into 32bits in the meanwhile
-	         */
-	    }, {
-	        key: "setDeflatedData",
-	        value: function setDeflatedData(data) {
-	            data = Pako.inflate(data);
-	            var width = (data[0] << 8) + data[1];
-	            var height = (data[2] << 8) + data[3];
-	            var newData = new Uint8Array(4 * width * height);
-	            for (var iter1 = 0, iter2 = 4, end = 4 * width * height; iter1 < end; iter1 += 4, iter2 += 3) {
-	                newData[iter1 + 0] = data[iter2 + 0];
-	                newData[iter1 + 1] = data[iter2 + 1];
-	                newData[iter1 + 2] = data[iter2 + 2];
-	                newData[iter1 + 3] = 255;
-	            }
-	            this.setData(newData, width, height);
-	        }
-
-	        /*
-	         @public
-	         return a zlib deflated 24 bits Uint8Array (we skip the alpha channel for now)
-	         the first 4 bytes of the array are width(2bytes) and height(2bytes)
-	         max width and height of 65535
-	         */
-	    }, {
-	        key: "getDeflatedData",
-	        value: function getDeflatedData() {
-	            // first we convert it to 24bits from 32 bits
-	            // the first 4 bytes of the returned
-	            var newData = new Uint8Array(3 * this.width * this.height + 4),
-	                data = this.data;
-
-	            newData[0] = this.width >> 8 & 255;
-	            newData[1] = this.width & 255;
-	            newData[2] = this.height >> 8 & 255;
-	            newData[3] = this.height & 255;
-
-	            for (var iter1 = 0, iter2 = 4, end = 4 * this.width * this.height; iter1 < end; iter1 += 4, iter2 += 3) {
-	                newData[iter2 + 0] = data[iter1 + 0];
-	                newData[iter2 + 1] = data[iter1 + 1];
-	                newData[iter2 + 2] = data[iter1 + 2];
-	            }
-	            return Pako.deflate(newData);
-	        }
-	    }]);
-
-	    return PixelData;
-	})();
-
-	module.exports = PixelData;
-
-/***/ },
-/* 27 */
-/***/ function(module, exports, __webpack_require__) {
-
-	"use strict";
-	var THREE = __webpack_require__(3);
-	/**
-	 * @author Eberhard Graether / http://egraether.com/
-	 * @author Mark Lundin 	/ http://mark-lundin.com
-	 * @author Simone Manini / http://daron1337.github.io
-	 * @author Luca Antiga 	/ http://lantiga.github.io
-	 */
-
-	var TrackballControls = function TrackballControls(object, domElement) {
-
-	        var _this = this;
-	        var STATE = { NONE: -1, ROTATE: 0, ZOOM: 1, PAN: 2, TOUCH_ROTATE: 3, TOUCH_ZOOM_PAN: 4 };
-
-	        this.object = object;
-	        this.domElement = domElement !== undefined ? domElement : document;
-
-	        // API
-
-	        this.enabled = true;
-
-	        this.screen = { left: 0, top: 0, width: 0, height: 0 };
-
-	        this.rotateSpeed = 1.0;
-	        this.zoomSpeed = 1.2;
-	        this.panSpeed = 0.3;
-
-	        this.noRotate = false;
-	        this.noZoom = false;
-	        this.noPan = false;
-
-	        this.staticMoving = false;
-	        this.dynamicDampingFactor = 0.2;
-
-	        this.minDistance = 0;
-	        this.maxDistance = Infinity;
-
-	        this.keys = [65 /*A*/, 83 /*S*/, 68 /*D*/];
-
-	        // internals
-
-	        this.target = new THREE.Vector3();
-
-	        var EPS = 0.000001;
-
-	        var lastPosition = new THREE.Vector3();
-
-	        var _state = STATE.NONE,
-	            _prevState = STATE.NONE,
-	            _eye = new THREE.Vector3(),
-	            _movePrev = new THREE.Vector2(),
-	            _moveCurr = new THREE.Vector2(),
-	            _lastAxis = new THREE.Vector3(),
-	            _lastAngle = 0,
-	            _zoomStart = new THREE.Vector2(),
-	            _zoomEnd = new THREE.Vector2(),
-	            _touchZoomDistanceStart = 0,
-	            _touchZoomDistanceEnd = 0,
-	            _panStart = new THREE.Vector2(),
-	            _panEnd = new THREE.Vector2();
-
-	        // for reset
-
-	        this.target0 = this.target.clone();
-	        this.position0 = this.object.position.clone();
-	        this.up0 = this.object.up.clone();
-
-	        // events
-
-	        var changeEvent = { type: 'change' };
-	        var startEvent = { type: 'start' };
-	        var endEvent = { type: 'end' };
-
-	        // methods
-
-	        this.handleResize = function () {
-
-	                if (this.domElement === document) {
-
-	                        this.screen.left = 0;
-	                        this.screen.top = 0;
-	                        this.screen.width = window.innerWidth;
-	                        this.screen.height = window.innerHeight;
-	                } else {
-
-	                        var box = this.domElement.getBoundingClientRect();
-	                        // adjustments come from similar code in the jquery offset() function
-	                        var d = this.domElement.ownerDocument.documentElement;
-	                        this.screen.left = box.left + window.pageXOffset - d.clientLeft;
-	                        this.screen.top = box.top + window.pageYOffset - d.clientTop;
-	                        this.screen.width = box.width;
-	                        this.screen.height = box.height;
-	                }
-	        };
-
-	        this.handleEvent = function (event) {
-
-	                if (typeof this[event.type] == 'function') {
-
-	                        this[event.type](event);
-	                }
-	        };
-
-	        var getMouseOnScreen = (function () {
-
-	                var vector = new THREE.Vector2();
-
-	                return function getMouseOnScreen(pageX, pageY) {
-
-	                        vector.set((pageX - _this.screen.left) / _this.screen.width, (pageY - _this.screen.top) / _this.screen.height);
-
-	                        return vector;
-	                };
-	        })();
-
-	        var getMouseOnCircle = (function () {
-
-	                var vector = new THREE.Vector2();
-
-	                return function getMouseOnCircle(pageX, pageY) {
-
-	                        vector.set((pageX - _this.screen.width * 0.5 - _this.screen.left) / (_this.screen.width * 0.5), (_this.screen.height + 2 * (_this.screen.top - pageY)) / _this.screen.width);
-
-	                        // screen.width intentional
-	                        return vector;
-	                };
-	        })();
-
-	        this.rotateCamera = (function () {
-
-	                var axis = new THREE.Vector3(),
-	                    quaternion = new THREE.Quaternion(),
-	                    eyeDirection = new THREE.Vector3(),
-	                    objectUpDirection = new THREE.Vector3(),
-	                    objectSidewaysDirection = new THREE.Vector3(),
-	                    moveDirection = new THREE.Vector3(),
-	                    angle;
-
-	                return function rotateCamera() {
-
-	                        moveDirection.set(_moveCurr.x - _movePrev.x, _moveCurr.y - _movePrev.y, 0);
-	                        angle = moveDirection.length();
-
-	                        if (angle) {
-
-	                                _eye.copy(_this.object.position).sub(_this.target);
-
-	                                eyeDirection.copy(_eye).normalize();
-	                                objectUpDirection.copy(_this.object.up).normalize();
-	                                objectSidewaysDirection.crossVectors(objectUpDirection, eyeDirection).normalize();
-
-	                                objectUpDirection.setLength(_moveCurr.y - _movePrev.y);
-	                                objectSidewaysDirection.setLength(_moveCurr.x - _movePrev.x);
-
-	                                moveDirection.copy(objectUpDirection.add(objectSidewaysDirection));
-
-	                                axis.crossVectors(moveDirection, _eye).normalize();
-
-	                                angle *= _this.rotateSpeed;
-	                                quaternion.setFromAxisAngle(axis, angle);
-
-	                                _eye.applyQuaternion(quaternion);
-	                                _this.object.up.applyQuaternion(quaternion);
-
-	                                _lastAxis.copy(axis);
-	                                _lastAngle = angle;
-	                        } else if (!_this.staticMoving && _lastAngle) {
-
-	                                _lastAngle *= Math.sqrt(1.0 - _this.dynamicDampingFactor);
-	                                _eye.copy(_this.object.position).sub(_this.target);
-	                                quaternion.setFromAxisAngle(_lastAxis, _lastAngle);
-	                                _eye.applyQuaternion(quaternion);
-	                                _this.object.up.applyQuaternion(quaternion);
-	                        }
-
-	                        _movePrev.copy(_moveCurr);
-	                };
-	        })();
-
-	        this.zoomCamera = function () {
-
-	                var factor;
-
-	                if (_state === STATE.TOUCH_ZOOM_PAN) {
-
-	                        factor = _touchZoomDistanceStart / _touchZoomDistanceEnd;
-	                        _touchZoomDistanceStart = _touchZoomDistanceEnd;
-	                        _eye.multiplyScalar(factor);
-	                } else {
-
-	                        factor = 1.0 + (_zoomEnd.y - _zoomStart.y) * _this.zoomSpeed;
-
-	                        if (factor !== 1.0 && factor > 0.0) {
-
-	                                _eye.multiplyScalar(factor);
-
-	                                if (_this.staticMoving) {
-
-	                                        _zoomStart.copy(_zoomEnd);
-	                                } else {
-
-	                                        _zoomStart.y += (_zoomEnd.y - _zoomStart.y) * this.dynamicDampingFactor;
-	                                }
-	                        }
-	                }
-	        };
-
-	        this.panCamera = (function () {
-
-	                var mouseChange = new THREE.Vector2(),
-	                    objectUp = new THREE.Vector3(),
-	                    pan = new THREE.Vector3();
-
-	                return function panCamera() {
-
-	                        mouseChange.copy(_panEnd).sub(_panStart);
-
-	                        if (mouseChange.lengthSq()) {
-
-	                                mouseChange.multiplyScalar(_eye.length() * _this.panSpeed);
-
-	                                pan.copy(_eye).cross(_this.object.up).setLength(mouseChange.x);
-	                                pan.add(objectUp.copy(_this.object.up).setLength(mouseChange.y));
-
-	                                _this.object.position.add(pan);
-	                                _this.target.add(pan);
-
-	                                if (_this.staticMoving) {
-
-	                                        _panStart.copy(_panEnd);
-	                                } else {
-
-	                                        _panStart.add(mouseChange.subVectors(_panEnd, _panStart).multiplyScalar(_this.dynamicDampingFactor));
-	                                }
-	                        }
-	                };
-	        })();
-
-	        this.checkDistances = function () {
-
-	                if (!_this.noZoom || !_this.noPan) {
-
-	                        if (_eye.lengthSq() > _this.maxDistance * _this.maxDistance) {
-
-	                                _this.object.position.addVectors(_this.target, _eye.setLength(_this.maxDistance));
-	                                _zoomStart.copy(_zoomEnd);
-	                        }
-
-	                        if (_eye.lengthSq() < _this.minDistance * _this.minDistance) {
-
-	                                _this.object.position.addVectors(_this.target, _eye.setLength(_this.minDistance));
-	                                _zoomStart.copy(_zoomEnd);
-	                        }
-	                }
-	        };
-
-	        this.update = function () {
-
-	                _eye.subVectors(_this.object.position, _this.target);
-
-	                if (!_this.noRotate) {
-
-	                        _this.rotateCamera();
-	                }
-
-	                if (!_this.noZoom) {
-
-	                        _this.zoomCamera();
-	                }
-
-	                if (!_this.noPan) {
-
-	                        _this.panCamera();
-	                }
-
-	                _this.object.position.addVectors(_this.target, _eye);
-
-	                _this.checkDistances();
-
-	                _this.object.lookAt(_this.target);
-
-	                if (lastPosition.distanceToSquared(_this.object.position) > EPS) {
-
-	                        _this.dispatchEvent(changeEvent);
-
-	                        lastPosition.copy(_this.object.position);
-	                }
-	        };
-
-	        this.reset = function () {
-
-	                _state = STATE.NONE;
-	                _prevState = STATE.NONE;
-
-	                _this.target.copy(_this.target0);
-	                _this.object.position.copy(_this.position0);
-	                _this.object.up.copy(_this.up0);
-
-	                _eye.subVectors(_this.object.position, _this.target);
-
-	                _this.object.lookAt(_this.target);
-
-	                _this.dispatchEvent(changeEvent);
-
-	                lastPosition.copy(_this.object.position);
-	        };
-
-	        // listeners
-
-	        function keydown(event) {
-
-	                if (_this.enabled === false) return;
-
-	                window.removeEventListener('keydown', keydown);
-
-	                _prevState = _state;
-
-	                if (_state !== STATE.NONE) {
-
-	                        return;
-	                } else if (event.keyCode === _this.keys[STATE.ROTATE] && !_this.noRotate) {
-
-	                        _state = STATE.ROTATE;
-	                } else if (event.keyCode === _this.keys[STATE.ZOOM] && !_this.noZoom) {
-
-	                        _state = STATE.ZOOM;
-	                } else if (event.keyCode === _this.keys[STATE.PAN] && !_this.noPan) {
-
-	                        _state = STATE.PAN;
-	                }
-	        }
-
-	        function keyup(event) {
-
-	                if (_this.enabled === false) return;
-
-	                _state = _prevState;
-
-	                window.addEventListener('keydown', keydown, false);
-	        }
-
-	        function mousedown(event) {
-
-	                if (_this.enabled === false) return;
-
-	                event.preventDefault();
-	                event.stopPropagation();
-
-	                if (_state === STATE.NONE) {
-
-	                        _state = event.button;
-	                }
-
-	                if (_state === STATE.ROTATE && !_this.noRotate) {
-
-	                        _moveCurr.copy(getMouseOnCircle(event.pageX, event.pageY));
-	                        _movePrev.copy(_moveCurr);
-	                } else if (_state === STATE.ZOOM && !_this.noZoom) {
-
-	                        _zoomStart.copy(getMouseOnScreen(event.pageX, event.pageY));
-	                        _zoomEnd.copy(_zoomStart);
-	                } else if (_state === STATE.PAN && !_this.noPan) {
-
-	                        _panStart.copy(getMouseOnScreen(event.pageX, event.pageY));
-	                        _panEnd.copy(_panStart);
-	                }
-
-	                document.addEventListener('mousemove', mousemove, false);
-	                document.addEventListener('mouseup', mouseup, false);
-
-	                _this.dispatchEvent(startEvent);
-	        }
-
-	        function mousemove(event) {
-
-	                if (_this.enabled === false) return;
-
-	                event.preventDefault();
-	                event.stopPropagation();
-
-	                if (_state === STATE.ROTATE && !_this.noRotate) {
-
-	                        _movePrev.copy(_moveCurr);
-	                        _moveCurr.copy(getMouseOnCircle(event.pageX, event.pageY));
-	                } else if (_state === STATE.ZOOM && !_this.noZoom) {
-
-	                        _zoomEnd.copy(getMouseOnScreen(event.pageX, event.pageY));
-	                } else if (_state === STATE.PAN && !_this.noPan) {
-
-	                        _panEnd.copy(getMouseOnScreen(event.pageX, event.pageY));
-	                }
-	        }
-
-	        function mouseup(event) {
-
-	                if (_this.enabled === false) return;
-
-	                event.preventDefault();
-	                event.stopPropagation();
-
-	                _state = STATE.NONE;
-
-	                document.removeEventListener('mousemove', mousemove);
-	                document.removeEventListener('mouseup', mouseup);
-	                _this.dispatchEvent(endEvent);
-	        }
-
-	        function mousewheel(event) {
-
-	                if (_this.enabled === false) return;
-
-	                event.preventDefault();
-	                event.stopPropagation();
-
-	                var delta = 0;
-
-	                if (event.wheelDelta) {
-
-	                        // WebKit / Opera / Explorer 9
-
-	                        delta = event.wheelDelta / 40;
-	                } else if (event.detail) {
-
-	                        // Firefox
-
-	                        delta = -event.detail / 3;
-	                }
-
-	                _zoomStart.y += delta * 0.01;
-	                _this.dispatchEvent(startEvent);
-	                _this.dispatchEvent(endEvent);
-	        }
-
-	        function touchstart(event) {
-
-	                if (_this.enabled === false) return;
-
-	                switch (event.touches.length) {
-
-	                        case 1:
-	                                _state = STATE.TOUCH_ROTATE;
-	                                _moveCurr.copy(getMouseOnCircle(event.touches[0].pageX, event.touches[0].pageY));
-	                                _movePrev.copy(_moveCurr);
-	                                break;
-
-	                        case 2:
-	                                _state = STATE.TOUCH_ZOOM_PAN;
-	                                var dx = event.touches[0].pageX - event.touches[1].pageX;
-	                                var dy = event.touches[0].pageY - event.touches[1].pageY;
-	                                _touchZoomDistanceEnd = _touchZoomDistanceStart = Math.sqrt(dx * dx + dy * dy);
-
-	                                var x = (event.touches[0].pageX + event.touches[1].pageX) / 2;
-	                                var y = (event.touches[0].pageY + event.touches[1].pageY) / 2;
-	                                _panStart.copy(getMouseOnScreen(x, y));
-	                                _panEnd.copy(_panStart);
-	                                break;
-
-	                        default:
-	                                _state = STATE.NONE;
-
-	                }
-	                _this.dispatchEvent(startEvent);
-	        }
-
-	        function touchmove(event) {
-
-	                if (_this.enabled === false) return;
-
-	                event.preventDefault();
-	                event.stopPropagation();
-
-	                switch (event.touches.length) {
-
-	                        case 1:
-	                                _movePrev.copy(_moveCurr);
-	                                _moveCurr.copy(getMouseOnCircle(event.touches[0].pageX, event.touches[0].pageY));
-	                                break;
-
-	                        case 2:
-	                                var dx = event.touches[0].pageX - event.touches[1].pageX;
-	                                var dy = event.touches[0].pageY - event.touches[1].pageY;
-	                                _touchZoomDistanceEnd = Math.sqrt(dx * dx + dy * dy);
-
-	                                var x = (event.touches[0].pageX + event.touches[1].pageX) / 2;
-	                                var y = (event.touches[0].pageY + event.touches[1].pageY) / 2;
-	                                _panEnd.copy(getMouseOnScreen(x, y));
-	                                break;
-
-	                        default:
-	                                _state = STATE.NONE;
-
-	                }
-	        }
-
-	        function touchend(event) {
-
-	                if (_this.enabled === false) return;
-
-	                switch (event.touches.length) {
-
-	                        case 1:
-	                                _movePrev.copy(_moveCurr);
-	                                _moveCurr.copy(getMouseOnCircle(event.touches[0].pageX, event.touches[0].pageY));
-	                                break;
-
-	                        case 2:
-	                                _touchZoomDistanceStart = _touchZoomDistanceEnd = 0;
-
-	                                var x = (event.touches[0].pageX + event.touches[1].pageX) / 2;
-	                                var y = (event.touches[0].pageY + event.touches[1].pageY) / 2;
-	                                _panEnd.copy(getMouseOnScreen(x, y));
-	                                _panStart.copy(_panEnd);
-	                                break;
-
-	                }
-
-	                _state = STATE.NONE;
-	                _this.dispatchEvent(endEvent);
-	        }
-
-	        function contextmenu(event) {
-
-	                event.preventDefault();
-	        }
-
-	        this.dispose = function () {
-
-	                this.domElement.removeEventListener('contextmenu', contextmenu, false);
-	                this.domElement.removeEventListener('mousedown', mousedown, false);
-	                this.domElement.removeEventListener('mousewheel', mousewheel, false);
-	                this.domElement.removeEventListener('DOMMouseScroll', mousewheel, false); // firefox
-
-	                this.domElement.removeEventListener('touchstart', touchstart, false);
-	                this.domElement.removeEventListener('touchend', touchend, false);
-	                this.domElement.removeEventListener('touchmove', touchmove, false);
-
-	                document.removeEventListener('mousemove', mousemove, false);
-	                document.removeEventListener('mouseup', mouseup, false);
-
-	                window.removeEventListener('keydown', keydown, false);
-	                window.removeEventListener('keyup', keyup, false);
-	        };
-
-	        this.domElement.addEventListener('contextmenu', contextmenu, false);
-	        this.domElement.addEventListener('mousedown', mousedown, false);
-	        this.domElement.addEventListener('mousewheel', mousewheel, false);
-	        this.domElement.addEventListener('DOMMouseScroll', mousewheel, false); // firefox
-
-	        this.domElement.addEventListener('touchstart', touchstart, false);
-	        this.domElement.addEventListener('touchend', touchend, false);
-	        this.domElement.addEventListener('touchmove', touchmove, false);
-
-	        window.addEventListener('keydown', keydown, false);
-	        window.addEventListener('keyup', keyup, false);
-
-	        this.handleResize();
-
-	        // force an update at start
-	        this.update();
-	};
-
-	TrackballControls.prototype = Object.create(THREE.EventDispatcher.prototype);
-	TrackballControls.prototype.constructor = TrackballControls;
-	module.exports = TrackballControls;
 
 /***/ }
 /******/ ]);

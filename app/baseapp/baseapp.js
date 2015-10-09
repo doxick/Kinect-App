@@ -1,7 +1,6 @@
 "use strict";
 var Three = require('three'),
-    BodyData = require('../../includes/bodydata/bodydata'),
-    PixelData = require('../../includes/pixeldata/pixeldata');
+    BodyData = require('../../includes/bodydata/bodydata');
 
 class BaseApp
 {
@@ -44,15 +43,6 @@ class BaseApp
 
     }
     onBodyData(bodyFrame)
-    {
-        if (bodyFrame.bodies.length) {
-            console.log(bodyFrame);
-            this.onBodyData = function () {
-            };
-        }
-        this.testing = 1;
-    }
-    onColorData(colorFrame)
     {
 
     }
@@ -99,14 +89,7 @@ class BaseApp
             case 'bodyData':
                 this._onBodyData(packet.data);
                 break;
-            case 'colorData':
-                this._onColorData(packet.data);
-                break;
         }
-    }
-    _onColorData(data)
-    {
-        this.onColorData(new PixelData(atob(data),{deflated:true}));
     }
     _onBodyData(data)
     {

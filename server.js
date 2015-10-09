@@ -1,7 +1,5 @@
 var Kinect2 = require('kinect2'),
-    PixelData = require('./includes/pixeldata/pixeldata'),
-    BodyData = require('./includes/bodydata/bodydata'),
-    btoa = require('btoa');
+    BodyData = require('./includes/bodydata/bodydata');
 
 var express = require('express'),
     app = express(),
@@ -42,17 +40,9 @@ var broadCastPacket = function(wss, type, data)
     var kinect = new Kinect2();
     if (! kinect.open())
         return;
-
-    kinect.on('colorFrame',function(colorFrame){
-        var pData = new PixelData(colorFrame, {width: 1920, height: 1080}).resize(320, 180).getDeflatedData();
-        broadCastpacket(wsServer, 'colorData',btoa(pData));
-    });
-    var test = 0;
     kinect.on('bodyFrame', function(bodyFrame){
         var bodyData = new BodyData(bodyFrame);
         broadCastPacket(wsServer, 'bodyData',bodyData.getData());
     });
-
-    //kinect.openColorReader();
     kinect.openBodyReader();
 })();
