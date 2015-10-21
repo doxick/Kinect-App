@@ -1,6 +1,6 @@
 "use strict";
 var Three = require('three'),
-    BaseApp = require('../baseapp/baseapp'),
+    BaseApp = require('../threejsapp/threejsapp'),
     ThreeTrackballControls = require('./trackballcontrols'),
     HandState = require('../../includes/bodydata/handstate'),
     JointType = require('../../includes/bodydata/jointtype');
@@ -61,7 +61,7 @@ class DemoApp extends BaseApp
                 mesh.position.set(
                     joint.position.x * 100,
                     joint.position.y * 100,
-                    joint.position.z * 10
+                    joint.position.z * 100
                 );
                 skeleton.add(mesh);
             })

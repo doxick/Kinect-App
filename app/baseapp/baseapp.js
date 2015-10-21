@@ -1,22 +1,11 @@
 "use strict";
-var Three = require('three'),
-    BodyData = require('../../includes/bodydata/bodydata'),
+var BodyData = require('../../includes/bodydata/bodydata'),
     PixelData = require('../../includes/pixeldata/pixeldata');
 
 class BaseApp
 {
-    constructor(container, width, height)
+    constructor()
     {
-        this.rootScene = new Three.Scene();
-        this.camera = new Three.PerspectiveCamera(90, width / height, 0.1, 1000 * 1000);
-        this.camera.position.z = 100;
-        var renderer = this.renderer = new Three.WebGLRenderer();
-        renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.setSize(width, height);
-        container.appendChild( renderer.domElement );
-
-        this._onWindowResize = this._onWindowResize.bind(this);
-        this._bindEvents();
         this._bindSocket();
     }
     run()
@@ -28,7 +17,6 @@ class BaseApp
         this.beforeUpdate();
         this.update();
         this.afterUpdate();
-        this.render();
         this.animationFrameId = requestAnimationFrame(this._update.bind(this));
     }
     beforeUpdate()
@@ -51,34 +39,9 @@ class BaseApp
     {
 
     }
-    render()
-    {
-        this.camera.lookAt(new Three.Vector3());
-        this.renderer.render(this.rootScene, this.camera);
-    }
-    stop()
-    {
+    stop() {
         cancelAnimationFrame(this.animationFrameId);
-        this._unbinedEvents();
         this._unbindSocket();
-    }
-
-
-
-
-    _bindEvents()
-    {
-        window.addEventListener('resize',this._onWindowResize, false);
-    }
-    _unbinedEvents()
-    {
-        window.removeEventListener('resize', this._onWindowResize, false);
-    }
-    _onWindowResize()
-    {
-        this.camera.aspect = window.innerWidth / window.innerHeight;
-        this.camera.updateProjectionMatrix();
-        this.renderer.setSize( window.innerWidth, window.innerHeight );
     }
 
     _bindSocket()
@@ -92,20 +55,18 @@ class BaseApp
         switch(packet.type)
         {
             case 'bodyData':
-                this._onBodyData(packet.data);
-                break;
+                return this._onBodyData(packet.data);
             case 'colorData':
-                this._onColorData(packet.data);
-                break;
+                return this._onColorData(packet.data);
         }
     }
     _onColorData(data)
     {
-        this.onColorData(new PixelData(atob(data),{deflated:true}));
+        return this.onColorData(new PixelData(atob(data),{deflated:true}));
     }
     _onBodyData(data)
     {
-        this.onBodyData(new BodyData(data));
+        return this.onBodyData(new BodyData(data));
     }
     _unbindSocket()
     {
