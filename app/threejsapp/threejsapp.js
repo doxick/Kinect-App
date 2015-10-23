@@ -69,4 +69,4 @@ class ThreejsApp extends BaseApp
     }
 }
 
-module.exports = BaseApp;
+module.exports = ThreejsApp;

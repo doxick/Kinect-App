@@ -46,7 +46,7 @@
 
 	"use strict";
 	__webpack_require__(1);
-	var App = __webpack_require__(2);
+	var App = __webpack_require__(27);
 
 	(function initialize() {
 	    var app = new App(document.body, window.innerWidth, window.innerHeight);
@@ -103,79 +103,84 @@
 	function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 	var Three = __webpack_require__(3),
-	    BaseApp = __webpack_require__(4),
-	    ThreeTrackballControls = __webpack_require__(28),
-	    HandState = __webpack_require__(8),
-	    JointType = __webpack_require__(7);
+	    BaseApp = __webpack_require__(4);
 
-	/*
-	    We cache some geometry and materials so we don't have to create them on the fly every iteration
-	    Saves memory + performance
+	var ThreejsApp = (function (_BaseApp) {
+	    _inherits(ThreejsApp, _BaseApp);
 
-	    OTHERWISE:
-	        if you remove a mesh from a scene, do not forgot to mesh.geometry.dispose() otherwise it won't be removed.
-	        If geometry is shared: this will remove it from memory so only remove it from the last mesh.
-	 */
-	var SPHERE = new Three.SphereGeometry(2.5, 16, 6);
-	var MATERIALS = [new Three.MeshPhongMaterial({ color: 0xFF0000, specular: 0x009900, shininess: 30, shading: Three.FlatShading }), new Three.MeshPhongMaterial({ color: 0x00FF00, specular: 0x009900, shininess: 30, shading: Three.FlatShading }), new Three.MeshPhongMaterial({ color: 0x0000FF, specular: 0x009900, shininess: 30, shading: Three.FlatShading }), new Three.MeshPhongMaterial({ color: 0x00FFFF, specular: 0x009900, shininess: 30, shading: Three.FlatShading }), new Three.MeshPhongMaterial({ color: 0xFFFF00, specular: 0x009900, shininess: 30, shading: Three.FlatShading }), new Three.MeshPhongMaterial({ color: 0xFF00FF, specular: 0x009900, shininess: 30, shading: Three.FlatShading })];
+	    function ThreejsApp(container, width, height) {
+	        _classCallCheck(this, ThreejsApp);
 
-	var DemoApp = (function (_BaseApp) {
-	    _inherits(DemoApp, _BaseApp);
+	        _get(Object.getPrototypeOf(ThreejsApp.prototype), 'constructor', this).call(this);
+	        this.rootScene = new Three.Scene();
+	        this.camera = new Three.PerspectiveCamera(90, width / height, 0.1, 1000 * 1000);
+	        this.camera.position.z = 100;
+	        var renderer = this.renderer = new Three.WebGLRenderer();
+	        renderer.setPixelRatio(window.devicePixelRatio);
+	        renderer.setSize(width, height);
+	        container.appendChild(renderer.domElement);
 
-	    function DemoApp(container, width, height) {
-	        _classCallCheck(this, DemoApp);
-
-	        _get(Object.getPrototypeOf(DemoApp.prototype), 'constructor', this).call(this, container, width, height);
-
-	        // add some trackball controls
-	        this.controls = new ThreeTrackballControls(this.camera);
-	        this.controls.target.set(0, 0, 0);
-
-	        // add some light to show what's on
-	        this.rootScene.add(new Three.AmbientLight(0xaaaaaa));
-	        // add some shading light sources
-	        var directionalLight = new Three.DirectionalLight(0xffffff, 0.5);
-	        directionalLight.position.set(0, 0, 10);
-	        this.rootScene.add(directionalLight);
-
-	        // just a collection of the skeletons
-	        this.baseNode = new Three.Object3D();
-	        this.rootScene.add(this.baseNode);
+	        this._onWindowResize = this._onWindowResize.bind(this);
+	        this._bindEvents();
 	    }
 
-	    _createClass(DemoApp, [{
-	        key: 'onBodyData',
-	        value: function onBodyData(bodyData) {
-	            var _this = this;
-
-	            this.baseNode.children.forEach(function (skeleton) {
-	                _this.baseNode.remove(skeleton);
-	            });
-
-	            if (bodyData.bodies.length == 0) return;
-
-	            bodyData.bodies.forEach(function (body, bodyIdx) {
-
-	                var skeleton = new Three.Group();
-	                body.joints.forEach(function (joint) {
-	                    var mesh = new Three.Mesh(SPHERE, MATERIALS[[body.leftHandState, body.rightHandState].indexOf(HandState.Closed) > -1 ? 6 : bodyIdx]);
-	                    mesh.position.set(joint.position.x * 100, joint.position.y * 100, joint.position.z * 100);
-	                    skeleton.add(mesh);
-	                });
-	                _this.baseNode.add(skeleton);
-	            });
-	        }
+	    _createClass(ThreejsApp, [{
+	        key: 'beforeUpdate',
+	        value: function beforeUpdate() {}
 	    }, {
 	        key: 'update',
-	        value: function update() {
-	            this.controls.update();
+	        value: function update() {}
+	    }, {
+	        key: 'afterUpdate',
+	        value: function afterUpdate() {
+	            this.render();
+	        }
+	    }, {
+	        key: 'onBodyData',
+	        value: function onBodyData(bodyFrame) {}
+	    }, {
+	        key: 'onColorData',
+	        value: function onColorData(colorFrame) {}
+	    }, {
+	        key: 'render',
+	        value: function render() {
+	            this.camera.lookAt(new Three.Vector3());
+	            this.renderer.render(this.rootScene, this.camera);
+	        }
+	    }, {
+	        key: 'stop',
+	        value: function stop() {
+	            _get(Object.getPrototypeOf(ThreejsApp.prototype), 'stop', this).call(this);
+	            this._unbinedEvents();
+	        }
+	    }, {
+	        key: '_bindEvents',
+	        value: function _bindEvents() {
+	            window.addEventListener('resize', this._onWindowResize, false);
+	        }
+	    }, {
+	        key: '_unbinedEvents',
+	        value: function _unbinedEvents() {
+	            window.removeEventListener('resize', this._onWindowResize, false);
+	        }
+	    }, {
+	        key: '_onWindowResize',
+	        value: function _onWindowResize() {
+	            this.camera.aspect = window.innerWidth / window.innerHeight;
+	            this.camera.updateProjectionMatrix();
+	            this.renderer.setSize(window.innerWidth, window.innerHeight);
+	        }
+	    }, {
+	        key: '_handleMessage',
+	        value: function _handleMessage(msg) {
+	            _get(Object.getPrototypeOf(ThreejsApp.prototype), '_handleMessage', this).call(this, msg);
 	        }
 	    }]);
 
-	    return DemoApp;
+	    return ThreejsApp;
 	})(BaseApp);
 
-	module.exports = DemoApp;
+	module.exports = ThreejsApp;
 
 /***/ },
 /* 3 */
@@ -2539,104 +2544,10 @@
 
 	var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
-	var _get = function get(_x, _x2, _x3) { var _again = true; _function: while (_again) { var object = _x, property = _x2, receiver = _x3; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x = parent; _x2 = property; _x3 = receiver; _again = true; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
-
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-	function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-	var Three = __webpack_require__(3),
-	    BaseApp = __webpack_require__(5);
-
-	var ThreejsApp = (function (_BaseApp) {
-	    _inherits(ThreejsApp, _BaseApp);
-
-	    function ThreejsApp(container, width, height) {
-	        _classCallCheck(this, ThreejsApp);
-
-	        _get(Object.getPrototypeOf(ThreejsApp.prototype), 'constructor', this).call(this);
-	        this.rootScene = new Three.Scene();
-	        this.camera = new Three.PerspectiveCamera(90, width / height, 0.1, 1000 * 1000);
-	        this.camera.position.z = 100;
-	        var renderer = this.renderer = new Three.WebGLRenderer();
-	        renderer.setPixelRatio(window.devicePixelRatio);
-	        renderer.setSize(width, height);
-	        container.appendChild(renderer.domElement);
-
-	        this._onWindowResize = this._onWindowResize.bind(this);
-	        this._bindEvents();
-	    }
-
-	    _createClass(ThreejsApp, [{
-	        key: 'beforeUpdate',
-	        value: function beforeUpdate() {}
-	    }, {
-	        key: 'update',
-	        value: function update() {}
-	    }, {
-	        key: 'afterUpdate',
-	        value: function afterUpdate() {
-	            this.render();
-	        }
-	    }, {
-	        key: 'onBodyData',
-	        value: function onBodyData(bodyFrame) {}
-	    }, {
-	        key: 'onColorData',
-	        value: function onColorData(colorFrame) {}
-	    }, {
-	        key: 'render',
-	        value: function render() {
-	            this.camera.lookAt(new Three.Vector3());
-	            this.renderer.render(this.rootScene, this.camera);
-	        }
-	    }, {
-	        key: 'stop',
-	        value: function stop() {
-	            _get(Object.getPrototypeOf(ThreejsApp.prototype), 'stop', this).call(this);
-	            this._unbinedEvents();
-	        }
-	    }, {
-	        key: '_bindEvents',
-	        value: function _bindEvents() {
-	            window.addEventListener('resize', this._onWindowResize, false);
-	        }
-	    }, {
-	        key: '_unbinedEvents',
-	        value: function _unbinedEvents() {
-	            window.removeEventListener('resize', this._onWindowResize, false);
-	        }
-	    }, {
-	        key: '_onWindowResize',
-	        value: function _onWindowResize() {
-	            this.camera.aspect = window.innerWidth / window.innerHeight;
-	            this.camera.updateProjectionMatrix();
-	            this.renderer.setSize(window.innerWidth, window.innerHeight);
-	        }
-	    }, {
-	        key: '_handleMessage',
-	        value: function _handleMessage(msg) {
-	            _get(Object.getPrototypeOf(ThreejsApp.prototype), '_handleMessage', this).call(this, msg);
-	        }
-	    }]);
-
-	    return ThreejsApp;
-	})(BaseApp);
-
-	module.exports = BaseApp;
-
-/***/ },
-/* 5 */
-/***/ function(module, exports, __webpack_require__) {
-
-	"use strict";
-
-	var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
-
-	var BodyData = __webpack_require__(6),
-	    PixelData = __webpack_require__(27);
+	var BodyData = __webpack_require__(5),
+	    PixelData = __webpack_require__(26);
 
 	var BaseApp = (function () {
 	    function BaseApp() {
@@ -2719,7 +2630,7 @@
 	module.exports = BaseApp;
 
 /***/ },
-/* 6 */
+/* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -2728,9 +2639,9 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-	var JointType = __webpack_require__(7),
-	    HandState = __webpack_require__(8),
-	    Body = __webpack_require__(9);
+	var JointType = __webpack_require__(6),
+	    HandState = __webpack_require__(7),
+	    Body = __webpack_require__(8);
 
 	var BodyData = (function () {
 	    function BodyData(data, options) {
@@ -2786,7 +2697,7 @@
 	module.exports.handState = HandState;
 
 /***/ },
-/* 7 */
+/* 6 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -2820,7 +2731,7 @@
 	// Right thumb
 
 /***/ },
-/* 8 */
+/* 7 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -2834,7 +2745,7 @@
 	// The hand is in the lasso state.
 
 /***/ },
-/* 9 */
+/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -2843,7 +2754,7 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-	var Joint = __webpack_require__(10);
+	var Joint = __webpack_require__(9);
 
 	var Body = (function () {
 	    function Body(data, options) {
@@ -2909,7 +2820,7 @@
 	module.exports = Body;
 
 /***/ },
-/* 10 */
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -2918,7 +2829,7 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-	var Pako = __webpack_require__(11),
+	var Pako = __webpack_require__(10),
 	    Vector2 = __webpack_require__(3).Vector2,
 	    Vector3 = __webpack_require__(3).Vector3,
 	    Vector4 = __webpack_require__(3).Vector4;
@@ -2980,17 +2891,17 @@
 	module.exports = Joint;
 
 /***/ },
-/* 11 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Top level file is just a mixin of submodules & constants
 	'use strict';
 
-	var assign = __webpack_require__(12).assign;
+	var assign = __webpack_require__(11).assign;
 
-	var deflate = __webpack_require__(13);
-	var inflate = __webpack_require__(21);
-	var constants = __webpack_require__(25);
+	var deflate = __webpack_require__(12);
+	var inflate = __webpack_require__(20);
+	var constants = __webpack_require__(24);
 
 	var pako = {};
 
@@ -2999,7 +2910,7 @@
 	module.exports = pako;
 
 /***/ },
-/* 12 */
+/* 11 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -3105,16 +3016,16 @@
 	exports.setTyped(TYPED_OK);
 
 /***/ },
-/* 13 */
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var zlib_deflate = __webpack_require__(14);
-	var utils = __webpack_require__(12);
-	var strings = __webpack_require__(19);
-	var msg = __webpack_require__(18);
-	var zstream = __webpack_require__(20);
+	var zlib_deflate = __webpack_require__(13);
+	var utils = __webpack_require__(11);
+	var strings = __webpack_require__(18);
+	var msg = __webpack_require__(17);
+	var zstream = __webpack_require__(19);
 
 	var toString = Object.prototype.toString;
 
@@ -3472,16 +3383,16 @@
 	exports.gzip = gzip;
 
 /***/ },
-/* 14 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var utils = __webpack_require__(12);
-	var trees = __webpack_require__(15);
-	var adler32 = __webpack_require__(16);
-	var crc32 = __webpack_require__(17);
-	var msg = __webpack_require__(18);
+	var utils = __webpack_require__(11);
+	var trees = __webpack_require__(14);
+	var adler32 = __webpack_require__(15);
+	var crc32 = __webpack_require__(16);
+	var msg = __webpack_require__(17);
 
 	/* Public constants ==========================================================*/
 	/* ===========================================================================*/
@@ -5190,12 +5101,12 @@
 	*/
 
 /***/ },
-/* 15 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var utils = __webpack_require__(12);
+	var utils = __webpack_require__(11);
 
 	/* Public constants ==========================================================*/
 	/* ===========================================================================*/
@@ -6369,7 +6280,7 @@
 	exports._tr_align = _tr_align;
 
 /***/ },
-/* 16 */
+/* 15 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -6405,7 +6316,7 @@
 	module.exports = adler32;
 
 /***/ },
-/* 17 */
+/* 16 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -6449,7 +6360,7 @@
 	module.exports = crc32;
 
 /***/ },
-/* 18 */
+/* 17 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -6467,13 +6378,13 @@
 	};
 
 /***/ },
-/* 19 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// String encode/decode helpers
 	'use strict';
 
-	var utils = __webpack_require__(12);
+	var utils = __webpack_require__(11);
 
 	// Quick check if we can use fast array to bin string conversion
 	//
@@ -6677,7 +6588,7 @@
 	};
 
 /***/ },
-/* 20 */
+/* 19 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -6710,18 +6621,18 @@
 	module.exports = ZStream;
 
 /***/ },
-/* 21 */
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var zlib_inflate = __webpack_require__(22);
-	var utils = __webpack_require__(12);
-	var strings = __webpack_require__(19);
-	var c = __webpack_require__(25);
-	var msg = __webpack_require__(18);
-	var zstream = __webpack_require__(20);
-	var gzheader = __webpack_require__(26);
+	var zlib_inflate = __webpack_require__(21);
+	var utils = __webpack_require__(11);
+	var strings = __webpack_require__(18);
+	var c = __webpack_require__(24);
+	var msg = __webpack_require__(17);
+	var zstream = __webpack_require__(19);
+	var gzheader = __webpack_require__(25);
 
 	var toString = Object.prototype.toString;
 
@@ -7109,16 +7020,16 @@
 	exports.ungzip = inflate;
 
 /***/ },
-/* 22 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var utils = __webpack_require__(12);
-	var adler32 = __webpack_require__(16);
-	var crc32 = __webpack_require__(17);
-	var inflate_fast = __webpack_require__(23);
-	var inflate_table = __webpack_require__(24);
+	var utils = __webpack_require__(11);
+	var adler32 = __webpack_require__(15);
+	var crc32 = __webpack_require__(16);
+	var inflate_fast = __webpack_require__(22);
+	var inflate_table = __webpack_require__(23);
 
 	var CODES = 0;
 	var LENS = 1;
@@ -8701,7 +8612,7 @@
 	*/
 
 /***/ },
-/* 23 */
+/* 22 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -9035,12 +8946,12 @@
 	};
 
 /***/ },
-/* 24 */
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var utils = __webpack_require__(12);
+	var utils = __webpack_require__(11);
 
 	var MAXBITS = 15;
 	var ENOUGH_LENS = 852;
@@ -9352,7 +9263,7 @@
 	};
 
 /***/ },
-/* 25 */
+/* 24 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -9405,7 +9316,7 @@
 	};
 
 /***/ },
-/* 26 */
+/* 25 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -9449,7 +9360,7 @@
 	module.exports = GZheader;
 
 /***/ },
-/* 27 */
+/* 26 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -9458,7 +9369,7 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	var Pako = __webpack_require__(11);
+	var Pako = __webpack_require__(10);
 
 	var PixelData = (function () {
 	    function PixelData(data, options) {
@@ -9569,6 +9480,95 @@
 	})();
 
 	module.exports = PixelData;
+
+/***/ },
+/* 27 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+	var _get = function get(_x, _x2, _x3) { var _again = true; _function: while (_again) { var object = _x, property = _x2, receiver = _x3; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x = parent; _x2 = property; _x3 = receiver; _again = true; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	var Three = __webpack_require__(3),
+	    BaseApp = __webpack_require__(2),
+	    ThreeTrackballControls = __webpack_require__(28),
+	    HandState = __webpack_require__(7),
+	    JointType = __webpack_require__(6);
+
+	/*
+	    We cache some geometry and materials so we don't have to create them on the fly every iteration
+	    Saves memory + performance
+
+	    OTHERWISE:
+	        if you remove a mesh from a scene, do not forgot to mesh.geometry.dispose() otherwise it won't be removed.
+	        If geometry is shared: this will remove it from memory so only remove it from the last mesh.
+	 */
+	var SPHERE = new Three.SphereGeometry(2.5, 16, 6);
+	var MATERIALS = [new Three.MeshPhongMaterial({ color: 0xFF0000, specular: 0x009900, shininess: 30, shading: Three.FlatShading }), new Three.MeshPhongMaterial({ color: 0x00FF00, specular: 0x009900, shininess: 30, shading: Three.FlatShading }), new Three.MeshPhongMaterial({ color: 0x0000FF, specular: 0x009900, shininess: 30, shading: Three.FlatShading }), new Three.MeshPhongMaterial({ color: 0x00FFFF, specular: 0x009900, shininess: 30, shading: Three.FlatShading }), new Three.MeshPhongMaterial({ color: 0xFFFF00, specular: 0x009900, shininess: 30, shading: Three.FlatShading }), new Three.MeshPhongMaterial({ color: 0xFF00FF, specular: 0x009900, shininess: 30, shading: Three.FlatShading })];
+
+	var DemoApp = (function (_BaseApp) {
+	    _inherits(DemoApp, _BaseApp);
+
+	    function DemoApp(container, width, height) {
+	        _classCallCheck(this, DemoApp);
+
+	        _get(Object.getPrototypeOf(DemoApp.prototype), 'constructor', this).call(this, container, width, height);
+
+	        // add some trackball controls
+	        this.controls = new ThreeTrackballControls(this.camera);
+	        this.controls.target.set(0, 0, 0);
+
+	        // add some light to show what's on
+	        this.rootScene.add(new Three.AmbientLight(0xaaaaaa));
+	        // add some shading light sources
+	        var directionalLight = new Three.DirectionalLight(0xffffff, 0.5);
+	        directionalLight.position.set(0, 0, 10);
+	        this.rootScene.add(directionalLight);
+
+	        // just a collection of the skeletons
+	        this.baseNode = new Three.Object3D();
+	        this.rootScene.add(this.baseNode);
+	    }
+
+	    _createClass(DemoApp, [{
+	        key: 'onBodyData',
+	        value: function onBodyData(bodyData) {
+	            var _this = this;
+
+	            this.baseNode.children.forEach(function (skeleton) {
+	                _this.baseNode.remove(skeleton);
+	            });
+
+	            if (bodyData.bodies.length == 0) return;
+
+	            bodyData.bodies.forEach(function (body, bodyIdx) {
+
+	                var skeleton = new Three.Group();
+	                body.joints.forEach(function (joint) {
+	                    var mesh = new Three.Mesh(SPHERE, MATERIALS[[body.leftHandState, body.rightHandState].indexOf(HandState.Closed) > -1 ? 6 : bodyIdx]);
+	                    mesh.position.set(joint.position.x * 100, joint.position.y * 100, joint.position.z * 100);
+	                    skeleton.add(mesh);
+	                });
+	                _this.baseNode.add(skeleton);
+	            });
+	        }
+	    }, {
+	        key: 'update',
+	        value: function update() {
+	            this.controls.update();
+	        }
+	    }]);
+
+	    return DemoApp;
+	})(BaseApp);
+
+	module.exports = DemoApp;
 
 /***/ },
 /* 28 */
