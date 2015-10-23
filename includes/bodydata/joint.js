@@ -1,8 +1,9 @@
 "use strict";
 var Pako = require('pako'),
-    Vector2 = require('three').Vector2,
-    Vector3 = require('three').Vector3,
-    Vector4 = require('three').Vector4;
+    Three = require('three'),
+    Vector2 = Three.Vector2,
+    Vector3 = Three.Vector3,
+    Vector4 = Three.Vector4;
 
 class Joint {
     constructor(data, options) {
